@@ -281,7 +281,7 @@ VALUES
     ,(14,14)
     ,(15,15)
     ,(16,16)
-    ,(16,21)
+    ,(16,20)
     ,(17,17)
     ,(18,18)
     ,(19,19)
@@ -292,4 +292,70 @@ SELECT renter_id, disk_id, rent_date, returned_date
 FROM disk_has_renter
 WHERE returned_date IS NULL;
 
+--Project 4 starts here
+--3. Show the disks in your database and any associated Individual artists only. 
+SELECT disk_name, release_date, firstname, lastname 					--See specs for columns page 93 shows how to override name
+FROM artist
+JOIN disk_has_artist 
+ON disk_has_artist.artist_id = artist.artist_id			 --Join to disk_has_artist - See Ch 4 for join info
+JOIN disk ON disk.disk_id = disk_has_artist.disk_id						     --Join to disk - Page 137 for explicit join
+WHERE artist_type_id = 1
+ORDER BY disk_name DESC	;				
 
+--4. Create a view called View_Individual_Artist that shows the artists’ names and not group names. Include the artist id in the view definition but do not display the id in your output.
+USE disk_inventoryTF
+GO
+DROP VIEW IF EXISTS View_Individual_Artist 
+GO
+CREATE VIEW View_Individual_Artist 
+AS 
+SELECT firstname, lastname, artist_id, artist_type_id
+FROM artist
+WHERE artist_type_id = 1
+							                  --See output for other specifications
+GO
+SELECT firstname, lastname 
+FROM View_Individual_Artist
+go					                  --See report output
+
+--5. Show the disks in your database and any associated Group artists only. Use the View_Individual_Artist view. 
+ALTER VIEW View_Individual_Artist
+AS
+SELECT disk_name AS DiskName, release_date AS ReleaseDate, firstname AS ArtistFirstName
+FROM artist
+JOIN disk_has_artist ON disk_has_artist.artist_id = artist.artist_id
+JOIN disk ON disk.disk_id = disk_has_artist.disk_id
+WHERE artist_type_id = 2
+go
+
+SELECT *
+FROM View_Individual_Artist
+ORDER BY DiskName DESC;
+go
+--6. Show the borrowed disks and who borrowed them.
+SELECT firstname AS First, lastname AS Last, disk_name AS DiskName, rent_date AS BorrowedDate, release_date AS ReturnedDate
+FROM renter
+JOIN disk_has_renter ON disk_has_renter.renter_id = renter.renter_id
+JOIN disk ON disk.disk_id = disk_has_renter.disk_id
+WHERE status_id = 2
+
+SELECT *
+FROM renter
+JOIN disk_has_renter ON disk_has_renter.renter_id = renter.renter_id
+JOIN disk ON disk.disk_id = disk_has_renter.disk_id
+--7. Show the number of times a disk has been borrowed.
+SELECT disk.disk_id AS Diskid, disk_name AS DiskName,COUNT(*) AS 'Times Borrowed'
+FROM disk
+join disk_has_renter on disk.disk_id = disk_has_renter.disk_id
+group by disk.disk_id, disk_name
+order by disk.disk_id
+go
+
+--8. Show the disks outstanding or on-loan and who has each disk. 
+SELECT disk_name, rent_date AS Borowed, returned_date AS Returned, lastname			--See output
+FROM disk
+JOIN disk_has_renter on disk_has_renter.disk_id = disk.disk_id
+JOIN renter on disk_has_renter.renter_id = renter.renter_id						--Join disk_has_borrower
+							--Join borrower
+WHERE returned_date IS NULL;
+							--See output for other specifications
