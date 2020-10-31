@@ -4,7 +4,7 @@
 /* ------------ -------------- --------------------------------------------------*/
 /* 10-9-2020    Tfoes     Initial implementation of the disk inventory db.  */
 /* 10-17-2020   Tfoes     Added Project3/Inserted new tables                     */
-/*                                                                               */
+/* 10-28-2020   Tfoes     Add inserts, updates, deletes                                                          */
 /*                                                                               */
 /*********************************************************************************/
 USE master;
@@ -358,4 +358,243 @@ JOIN disk_has_renter on disk_has_renter.disk_id = disk.disk_id
 JOIN renter on disk_has_renter.renter_id = renter.renter_id						--Join disk_has_borrower
 							--Join borrower
 WHERE returned_date IS NULL;
+GO
 							--See output for other specifications
+
+--Project 5
+DROP PROC IF EXISTS sp_ins_disk;
+GO
+CREATE PROC sp_ins_disk
+	@disk_name nvarchar(60), @release_date date, @genre_id int, @status_id int, @disk_type_id int
+AS
+BEGIN TRY
+	INSERT disk (disk_name, release_date, genre_id, status_id, disk_type_id)
+	VALUES (@disk_name, @release_date, @genre_id, @status_id, @disk_type_id);
+	END TRY
+	BEGIN CATCH
+		PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_ins_disk to diskUserTF
+EXEC sp_ins_disk 'Blender2', '1/29/2000', 4, 1, 1;
+GO
+EXEC sp_ins_disk 'Blender3', '1/29/2000', 4, 1, NULL;
+GO
+--Create update disk stored procedure
+
+USE [disk_inventoryTF]
+GO
+--Update procedure 
+DROP PROC IF EXISTS sp_upd_disk;
+GO
+CREATE PROC sp_upd_disk
+	@disk_id int, @disk_name nvarchar(60), @release_date date, @genre_id int, @status_id int, @disk_type_id int
+AS
+BEGIN TRY
+UPDATE [dbo].[disk]
+   SET [disk_name] = @disk_name
+      ,[release_date] = @release_date
+      ,[genre_id] = @genre_id
+      ,[status_id] = @status_id
+      ,[disk_type_id] = @disk_type_id
+ WHERE disk_id = @disk_id;
+ END TRY
+	BEGIN CATCH
+		PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_upd_disk to diskUserTF
+EXEC sp_upd_disk 44, 'Blender2', '09/15/2001', 4, 2, 1;
+GO
+EXEC sp_upd_disk 47, 'Blender3', '09/15/2001', 4, 2, NULL;
+GO
+
+--Create delete disk procedure. Delete accepts 
+DROP PROC IF EXISTS sp_del_disk;
+GO
+CREATE PROC sp_del_disk
+@disk_id int
+AS
+BEGIN TRY 
+DELETE FROM [dbo].[disk]
+WHERE disk_id = @disk_id;
+ END TRY
+	BEGIN CATCH
+		PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_del_disk to diskUserTF
+EXEC sp_del_disk 44;
+GO
+EXEC sp_del_disk 47;
+GO
+--Insert procedure for artists
+DROP PROC IF EXISTS sp_ins_artist;
+GO
+CREATE PROC sp_ins_artist
+--add artist parameters
+@fistname nvarchar(60), @lastname nvarchar(60), @artist_type_id int
+AS
+	BEGIN TRY
+--Add insert to artist
+INSERT Artist
+VALUES (@fistname, @lastname, @artist_type_id);
+	END TRY
+	BEGIN CATCH
+	PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_ins_artist TO diskUserTF
+GO
+EXEC sp_ins_artist 'Jar', 'Leto', 1
+GO
+EXEC sp_ins_artist 'Cher', NULL, 1
+GO
+EXEC sp_ins_artist 'Cher', NULL, NULL
+GO
+
+--Update procedure for artist
+DROP PROC IF EXISTS sp_upd_artist;
+GO
+CREATE PROC sp_upd_artist
+--add artist parameters
+@artist_id int, @fistname nvarchar(60), @lastname nvarchar(60), @artist_type_id int
+AS
+	BEGIN TRY
+--Add update to artist
+UPDATE Artist
+SET firstname = @fistname, lastname = @lastname, artist_type_id = @artist_type_id
+WHERE artist_id = @artist_id;
+	END TRY
+	BEGIN CATCH
+	PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_upd_artist TO diskUserTF
+GO
+EXEC sp_upd_artist 21, 'Jar', 'Leto', 2
+GO
+EXEC sp_upd_artist 22, 'Cher', NULL, 2
+GO
+EXEC sp_upd_artist 23, 'Cher', NULL, 11
+GO
+
+--Delete procedure for artist
+DROP PROC IF EXISTS sp_del_artist;
+GO
+CREATE PROC sp_del_artist
+--Delete accepts a primary key value for delete 
+@artist_id int
+AS
+	BEGIN TRY
+--add delete statement to artist
+DELETE Artist
+WHERE artist_id = @artist_id;
+	END TRY
+	BEGIN CATCH
+	PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_upd_artist TO diskUserTF
+GO
+EXEC sp_del_artist 21
+GO
+EXEC sp_del_artist 22
+GO
+EXEC sp_del_artist 23
+GO
+
+--Create insert procedure for renter
+DROP PROC IF EXISTS sp_ins_renter;
+GO
+CREATE PROC sp_ins_renter
+--add renter parameters
+@firstname nvarchar(60), @lastname nvarchar(60), @phone_num varchar(15)
+AS
+	BEGIN TRY
+--Insert accepts all colums as input parameters exept for identity fields
+INSERT renter (firstname, lastname, phone_num)
+VALUES (@firstname, @lastname, @phone_num)
+	END TRY
+	BEGIN CATCH
+	PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_ins_renter TO diskUserTF
+GO
+EXEC sp_ins_renter 'Mickey', 'Mouse', '123-123-1234';
+GO
+EXEC sp_ins_renter 'Minnie', '', '222-222-2345';
+GO
+EXEC sp_ins_renter 'Daisy', ' ', '333-123-4567';
+GO
+EXEC sp_ins_renter 'Daffy', NULL, '444-123-4567';
+GO
+
+--Creat update procedure for renter
+DROP PROC IF EXISTS sp_upd_renter;
+GO
+CREATE PROC sp_upd_renter
+--add renter parameters
+@renter_id int, @firstname nvarchar(60), @lastname nvarchar(60), @phone_num varchar(15)
+AS
+	BEGIN TRY
+--Insert accepts all colums as input parameters exept for identity fields
+UPDATE renter
+SET firstname = @firstname, lastname = @lastname, phone_num = @phone_num
+WHERE renter_id = @renter_id;
+	END TRY
+	BEGIN CATCH
+	PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_ins_renter TO diskUserTF
+GO
+EXEC sp_upd_renter 23, 'Mickey', 'Mouseee', '123-123-2222';
+GO
+EXEC sp_upd_renter 24, 'Minnie', 'Bennet', '222-211-2345';
+GO
+EXEC sp_upd_renter 25, 'Daisy', 'Flower', '333-563-4567';
+GO
+EXEC sp_upd_renter 25, 'Daffy', NULL, '444-123-4567';
+GO
+
+--Creat delete procedure for renter
+DROP PROC IF EXISTS sp_del_renter;
+GO
+CREATE PROC sp_del_renter
+--add renter parameters
+@renter_id int
+AS
+	BEGIN TRY
+--Insert accepts all colums as input parameters exept for identity fields
+DELETE renter
+WHERE renter_id = @renter_id;
+	END TRY
+	BEGIN CATCH
+	PRINT 'An error occured.';
+		PRINT 'Message: ' + CONVERT(varchar(200), ERROR_MESSAGE());
+	END CATCH
+GO
+GRANT EXECUTE ON sp_ins_renter TO diskUserTF
+GO
+EXEC sp_del_renter 23;
+GO
+EXEC sp_del_renter 24;
+GO
+EXEC sp_del_renter 25;
+GO
+EXEC sp_del_renter 25;
+GO
+
+
+
+
